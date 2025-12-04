@@ -26,28 +26,80 @@
 - **Syntax Highlighting** - Beautiful code blocks
 - **Dark/Light Mode** - Toggle between themes
 
-## 🚀 Quick Start
+## 📦 Installation
 
-### 1. Install from GitHub
+### Simple Installation (Recommended)
+
+Just copy and paste this into your R console:
 
 ```r
-# Install remotes if you don't have it
+# Step 1: Install remotes (if you don't have it)
 install.packages("remotes")
 
-# Install Rflow
+# Step 2: Install Rflow from GitHub
 remotes::install_github("carlychery2001/RflowLabs")
 ```
 
-### 2. Get API Key
+### Install Specific Version
+
+```r
+# Install v1.0.0 specifically
+remotes::install_github("carlychery2001/RflowLabs@v1.0.0")
+
+# Install latest release (recommended for stability)
+remotes::install_github("carlychery2001/RflowLabs@*release")
+
+# Install development version (main branch)
+remotes::install_github("carlychery2001/RflowLabs@main")
+```
+
+### Update Rflow
+
+To update to the latest version:
+
+```r
+# Reinstall from GitHub
+remotes::install_github("carlychery2001/RflowLabs")
+```
+
+### Troubleshooting Installation
+
+If installation fails:
+
+```r
+# Try with dependencies
+remotes::install_github("carlychery2001/RflowLabs", dependencies = TRUE)
+
+# Or force reinstall
+remotes::install_github("carlychery2001/RflowLabs", force = TRUE)
+```
+
+## 🚀 Quick Start
+
+### 1. Get Your API Key
 
 Get your Claude API key from [Anthropic Console](https://console.anthropic.com/)
 
+### 2. Set Up API Key
+
+**Option A: For Current Session Only**
 ```r
 # Set your API key (required)
 Sys.setenv(ANTHROPIC_API_KEY = "sk-ant-api03-your-key-here")
 
-# Or add to .Renviron for permanent setup:
+# Verify it's set
+Sys.getenv("ANTHROPIC_API_KEY")
+```
+
+**Option B: Permanent Setup (Recommended)**
+```r
+# Edit your .Renviron file
+usethis::edit_r_environ()
+
+# Add this line (replace with your actual key):
 # ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
+
+# Save and restart R
 ```
 
 ### 3. Launch Rflow
@@ -59,8 +111,15 @@ library(Rflow)
 # Start Rflow in RStudio viewer
 start_rflow()
 
-# Or open in browser (if viewer is busy)
+# Or open in browser (if viewer is busy with maps/plots)
 start_rflow(launch_in = "browser")
+```
+
+### 4. Stop Rflow
+
+```r
+# When you're done
+stop_rflow()
 ```
 
 ## 💡 Usage Examples
