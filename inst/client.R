@@ -2134,12 +2134,21 @@ server <- function(input, output, session) {
   cat("Server function started\n")
   
   # Markdown rendering function with code block support - optimized for streaming
-  # SECURITY: Prevents XSS by escaping HTML before processing markdown
+  # SECURITY: Prevents XSS by escaping only user-generated content, not markdown
   render_markdown <- function(text) {
     if (is.null(text) || nchar(text) == 0) return("")
 
     tryCatch({
-      # SECURITY FIX: Extract code blocks BEFORE HTML escaping
+      # Helper function to escape HTML in text content only
+      escape_text_content <- function(txt) {
+        txt <- gsub("&", "&amp;", txt, fixed = TRUE)
+        txt <- gsub("<", "&lt;", txt, fixed = TRUE)
+        txt <- gsub(">", "&gt;", txt, fixed = TRUE)
+        txt <- gsub("\"", "&quot;", txt, fixed = TRUE)
+        return(txt)
+      }
+
+      # SECURITY FIX: Extract code blocks BEFORE any processing
       code_blocks <- list()
       code_counter <- 0
 
@@ -2150,76 +2159,84 @@ server <- function(input, output, session) {
         return(paste0("__RFLOW_CODE_BLOCK_", code_counter, "__"))
       }, text, perl = TRUE)
 
-      # SECURITY FIX: NOW escape all HTML to prevent XSS
-      text <- htmltools::htmlEscape(text, attribute = FALSE)
-
-      # Restore code blocks with proper HTML (escaped content)
-      for (i in seq_along(code_blocks)) {
-        placeholder <- paste0("__RFLOW_CODE_BLOCK_", i, "__")
-        code_content <- gsub("```[rR]?\\n?([^`]+)```", "\\1", code_blocks[[i]], perl = TRUE)
-        # Escape the code content too
-        code_content <- htmltools::htmlEscape(code_content, attribute = FALSE)
-        code_html <- paste0("<pre><code class='language-r'>", code_content, "</code></pre>")
-        text <- gsub(placeholder, code_html, text, fixed = TRUE)
-      }
-      
       # Split into lines for processing
       lines <- strsplit(text, "\n", fixed = TRUE)[[1]]
       processed_lines <- character(length(lines))
-      
+
       for (i in seq_along(lines)) {
         line <- lines[i]
-        
-        # Skip lines that are already HTML (code blocks)
-        if (grepl("^<pre>|^</pre>|^<code", line)) {
+
+        # Check for code block placeholders
+        if (grepl("__RFLOW_CODE_BLOCK_", line)) {
           processed_lines[i] <- line
           next
         }
-        
+
         # Horizontal rule (---)
         if (grepl("^---+$", line)) {
           line <- "<hr>"
         }
         # Headers (###, ##, #)
         else if (grepl("^### ", line)) {
-          line <- sub("^### (.+)$", "<h3>\\1</h3>", line)
+          content <- sub("^### (.+)$", "\\1", line)
+          content <- escape_text_content(content)
+          line <- paste0("<h3>", content, "</h3>")
         } else if (grepl("^## ", line)) {
-          line <- sub("^## (.+)$", "<h2>\\1</h2>", line)
+          content <- sub("^## (.+)$", "\\1", line)
+          content <- escape_text_content(content)
+          line <- paste0("<h2>", content, "</h2>")
         } else if (grepl("^# ", line)) {
-          line <- sub("^# (.+)$", "<h1>\\1</h1>", line)
+          content <- sub("^# (.+)$", "\\1", line)
+          content <- escape_text_content(content)
+          line <- paste0("<h1>", content, "</h1>")
         }
         # Numbered lists (1. item)
         else if (grepl("^[0-9]+\\. ", line)) {
-          line <- sub("^[0-9]+\\. (.+)$", "<li>\\1</li>", line)
+          content <- sub("^[0-9]+\\. (.+)$", "\\1", line)
+          # Process bold and code in list items before escaping
+          content <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", content)
+          content <- gsub("`([^`]+)`", "<code>\\1</code>", content)
+          line <- paste0("<li>", content, "</li>")
         }
         # Bullet lists (- item or * item)
         else if (grepl("^[*-] ", line)) {
-          line <- sub("^[*-] (.+)$", "<li>\\1</li>", line)
+          content <- sub("^[*-] (.+)$", "\\1", line)
+          # Process bold and code in list items before escaping
+          content <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", content)
+          content <- gsub("`([^`]+)`", "<code>\\1</code>", content)
+          line <- paste0("<li>", content, "</li>")
         }
-        
-        # Bold (**text**)
-        line <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", line)
-        
-        # Inline code (`text`) - but not if already in code block
-        if (!grepl("<code", line)) {
+        else {
+          # Regular line - process bold and inline code
+          line <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", line)
           line <- gsub("`([^`]+)`", "<code>\\1</code>", line)
         }
-        
+
         processed_lines[i] <- line
       }
-      
+
       # Join lines with <br>
       html <- paste(processed_lines, collapse = "<br>")
-      
+
+      # Restore code blocks with proper HTML (escaped content)
+      for (i in seq_along(code_blocks)) {
+        placeholder <- paste0("__RFLOW_CODE_BLOCK_", i, "__")
+        code_content <- gsub("```[rR]?\\n?([^`]+)```", "\\1", code_blocks[[i]], perl = TRUE)
+        # Escape the code content
+        code_content <- escape_text_content(code_content)
+        code_html <- paste0("<pre><code class='language-r'>", code_content, "</code></pre>")
+        html <- gsub(placeholder, code_html, html, fixed = TRUE)
+      }
+
       # Clean up code blocks (remove <br> inside them)
       html <- gsub("<pre><code class='language-r'><br>", "<pre><code class='language-r'>", html, fixed = TRUE)
       html <- gsub("<br></code></pre>", "</code></pre>", html, fixed = TRUE)
-      
+
       # Wrap consecutive <li> items in <ul>
       html <- gsub("(<li>.*?</li>)(<br>)+(<li>)", "\\1\\3", html)
       html <- gsub("(<li>.*?</li>)", "<ul>\\1</ul>", html)
       html <- gsub("</ul><br><ul>", "", html, fixed = TRUE)
-      
+
       return(html)
     }, error = function(e) {
       # If rendering fails, return original text with line breaks
