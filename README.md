@@ -366,6 +366,18 @@ start_rflow()
 - [tidyverse Website](https://www.tidyverse.org/)
 - [R for Data Science](https://r4ds.had.co.nz/)
 
+## 💝 Support Development
+
+Rflow is free and open source. If it saves you time or helps your research/work, please consider supporting its development:
+
+- ⭐ **Star this repository** - Help others discover Rflow
+- 💵 **Zelle**: `cchery@earth.ac.cr`
+- 💰 **Cash App**: `$CarlyCHERY0`
+- 🐛 **Report bugs** - Help improve Rflow
+- 🤝 **Spread the word** - Share with colleagues
+
+Your support keeps Rflow maintained and improved. Thank you! 🙏
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to:
