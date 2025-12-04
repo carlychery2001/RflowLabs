@@ -1,8 +1,8 @@
 <div align="center">
 
-# Rflow - Professional AI Assistant for RStudio
+<img src="images/logo.png" width="200" alt="Rflow Logo">
 
-<img src="https://github.com/carlychery2001.png" width="150" height="150" style="border-radius: 50%;" alt="Carly Chery">
+# Rflow - Professional AI Assistant for RStudio
 
 **Rflow** is an advanced AI coding assistant that lives inside RStudio. Get expert help with R programming, data analysis, visualization, and statistical modeling through a clean, professional chat interface.
 
@@ -405,7 +405,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 <tr>
 <td align="center">
 <a href="https://github.com/carlychery2001">
-<img src="https://github.com/carlychery2001.png" width="100" style="border-radius: 50%;" alt="Carly Chery"/>
+<img src="images/profile.png" width="150" style="border-radius: 50%;" alt="Carly Chery"/>
 <br />
 <sub><b>Carly Chery</b></sub>
 </a>
