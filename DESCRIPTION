@@ -1,6 +1,6 @@
 Package: Rflow
 Title: Professional AI Assistant for RStudio
-Version: 0.9.0
+Version: 1.0.0
 Authors@R:
     person("Carly", "Chery", email = "cchery@earth.ac.cr", role = c("aut", "cre"))
 Description: An advanced AI coding assistant that lives inside RStudio.
@@ -11,8 +11,8 @@ Description: An advanced AI coding assistant that lives inside RStudio.
     analysis, publication-level plots, direct R integration, real-time streaming,
     smart data loading, and automatic error recovery.
 License: MIT + file LICENSE
-URL: https://github.com/carlychery/Rflow
-BugReports: https://github.com/carlychery/Rflow/issues
+URL: https://github.com/carlychery2001/RflowLabs
+BugReports: https://github.com/carlychery2001/RflowLabs/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

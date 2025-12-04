@@ -28,11 +28,14 @@
 
 ## 🚀 Quick Start
 
-### 1. Install Requirements
+### 1. Install from GitHub
 
 ```r
-# Install from R console
-install.packages("devtools")
+# Install remotes if you don't have it
+install.packages("remotes")
+
+# Install Rflow
+remotes::install_github("carlychery2001/RflowLabs")
 ```
 
 ### 2. Get API Key
@@ -51,7 +54,7 @@ Sys.setenv(ANTHROPIC_API_KEY = "sk-ant-api03-your-key-here")
 
 ```r
 # Load the package
-devtools::load_all("path/to/Rflow")
+library(Rflow)
 
 # Start Rflow in RStudio viewer
 start_rflow()
@@ -306,14 +309,31 @@ start_rflow()
 
 ## 🤝 Contributing
 
-This is a personal project by the user. Fork and modify as needed!
+Contributions are welcome! Please feel free to:
+- [Report bugs](https://github.com/carlychery2001/RflowLabs/issues)
+- [Request features](https://github.com/carlychery2001/RflowLabs/issues)
+- Submit pull requests
 
 ## 📄 License
 
-Use freely for personal and commercial projects.
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 👤 Author
+
+**Carly Chery**
+- Email: cchery@earth.ac.cr
+- GitHub: [@carlychery2001](https://github.com/carlychery2001)
+
+## 🙏 Acknowledgments
+
+- Powered by [Claude Sonnet 4.5](https://www.anthropic.com/claude) from Anthropic
+- Built with [shinychat](https://github.com/posit-dev/shinychat)
+- Uses [ellmer](https://github.com/tidyverse/ellmer) for LLM integration
 
 ---
 
 **Built with ❤️ for the R community**
 
 **Powered by Claude Sonnet 4.5 | 1730 Expert Prompts | R 4.5.2 Source Code | Master-Level R Knowledge**
+
+**[Report Bug](https://github.com/carlychery2001/RflowLabs/issues) | [Request Feature](https://github.com/carlychery2001/RflowLabs/issues) | [View on GitHub](https://github.com/carlychery2001/RflowLabs)**
