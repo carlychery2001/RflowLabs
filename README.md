@@ -1,6 +1,16 @@
+<div align="center">
+
 # Rflow - Professional AI Assistant for RStudio
 
+<img src="https://github.com/carlychery2001.png" width="150" height="150" style="border-radius: 50%;" alt="Carly Chery">
+
 **Rflow** is an advanced AI coding assistant that lives inside RStudio. Get expert help with R programming, data analysis, visualization, and statistical modeling through a clean, professional chat interface.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![R Version](https://img.shields.io/badge/R-%E2%89%A5%204.0.0-blue)](https://www.r-project.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/carlychery2001/RflowLabs?style=social)](https://github.com/carlychery2001/RflowLabs/stargazers)
+
+</div>
 
 ## ✨ Features
 
@@ -391,9 +401,20 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 👤 Author
 
-**Carly Chery**
-- Email: cchery@earth.ac.cr
-- GitHub: [@carlychery2001](https://github.com/carlychery2001)
+<table>
+<tr>
+<td align="center">
+<a href="https://github.com/carlychery2001">
+<img src="https://github.com/carlychery2001.png" width="100" style="border-radius: 50%;" alt="Carly Chery"/>
+<br />
+<sub><b>Carly Chery</b></sub>
+</a>
+<br />
+<a href="mailto:cchery@earth.ac.cr">📧 Email</a> •
+<a href="https://github.com/carlychery2001">💻 GitHub</a>
+</td>
+</tr>
+</table>
 
 ## 🙏 Acknowledgments
 
