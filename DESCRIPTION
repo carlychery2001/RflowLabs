@@ -1,0 +1,62 @@
+Package: Rflow
+Title: Professional AI Assistant for RStudio
+Version: 0.9.0
+Authors@R:
+    person("Carly", "Chery", email = "cchery@earth.ac.cr", role = c("aut", "cre"))
+Description: An advanced AI coding assistant that lives inside RStudio.
+    Get expert help with R programming, data analysis, visualization, and
+    statistical modeling through a clean, professional chat interface. Powered
+    by Claude Sonnet 4.5 with 1730+ expert training prompts and direct access
+    to R 4.5.2 source code for deep understanding. Features include: AI-powered
+    analysis, publication-level plots, direct R integration, real-time streaming,
+    smart data loading, and automatic error recovery.
+License: MIT + file LICENSE
+URL: https://github.com/carlychery/Rflow
+BugReports: https://github.com/carlychery/Rflow/issues
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.0.0)
+Imports:
+    base64enc,
+    bslib,
+    btw,
+    cli,
+    coro,
+    DBI,
+    digest,
+    ellmer,
+    fastmap,
+    glue,
+    htmltools,
+    httr,
+    httr2,
+    jsonlite,
+    later,
+    nanonext,
+    processx,
+    promises,
+    rappdirs,
+    rlang (>= 1.1.0),
+    RSQLite,
+    rstudioapi,
+    S7,
+    shiny,
+    shinychat,
+    shinyjs,
+    withr,
+    yaml
+Suggests:
+    testthat (>= 3.0.0),
+    httpuv,
+    readxl,
+    sf,
+    pdftools,
+    officer,
+    plotly,
+    htmlwidgets
+Remotes:
+    posit-dev/shinychat/pkg-r,
+    tidyverse/ellmer,
+    posit-dev/btw
