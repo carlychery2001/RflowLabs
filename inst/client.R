@@ -1023,13 +1023,24 @@ ui <- fluidPage(
         font-size: 10px;
       }
       
-      .message-content strong {
-        font-weight: 600;
-        color: #1a202c;
+      .message-content strong,
+      .message-content b {
+        font-weight: 700 !important;
+        color: #1a202c !important;
       }
-      
-      .message-content em {
-        font-style: italic;
+
+      .message-content em,
+      .message-content i {
+        font-style: italic !important;
+      }
+
+      .message-content code {
+        background: #f1f5f9 !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+        font-size: 0.9em !important;
+        color: #e83e8c !important;
       }
       
       /* Scrollbar */
@@ -2133,87 +2144,59 @@ cat("UI created\n")
 server <- function(input, output, session) {
   cat("Server function started\n")
   
-  # Markdown rendering function with code block support - optimized for streaming
-  # SECURITY: Escapes dangerous HTML while preserving markdown formatting
+  # Simplified markdown rendering with HTML/CSS
   render_markdown <- function(text) {
     if (is.null(text) || nchar(text) == 0) return("")
 
-    tryCatch({
-      # Step 1: Extract and protect code blocks
-      code_blocks <- list()
-      code_counter <- 0
-      text <- gsub("```[rR]?\\n?([^`]+)```", function(match) {
-        code_counter <<- code_counter + 1
-        code_blocks[[code_counter]] <<- match[1]
-        return(paste0("__CODE__", code_counter, "__"))
-      }, text, perl = TRUE)
+    # Simple and direct - just replace markdown with HTML
+    html <- text
 
-      # Step 2: Process inline formatting FIRST (works across the whole text)
-      # Bold: **text** -> <strong>text</strong>
-      text <- gsub("\\*\\*([^*]+?)\\*\\*", "<strong>\\1</strong>", text, perl = TRUE)
-      # Inline code: `text` -> <code>text</code>
-      text <- gsub("`([^`]+?)`", "<code>\\1</code>", text, perl = TRUE)
+    # Extract code blocks first
+    code_blocks <- list()
+    code_counter <- 0
+    html <- gsub("```[rR]?\\n?([^`]+)```", function(match) {
+      code_counter <<- code_counter + 1
+      code_blocks[[code_counter]] <<- match[1]
+      return(paste0("__CODEBLOCK", code_counter, "__"))
+    }, html, perl = TRUE)
 
-      # Step 3: Process line-by-line for structure
-      lines <- strsplit(text, "\n", fixed = TRUE)[[1]]
-      processed <- character(length(lines))
+    # Convert markdown to HTML - do this BEFORE escaping
+    # Bold: **text** or __text__
+    html <- gsub("\\*\\*(.+?)\\*\\*", "<b>\\1</b>", html)
+    html <- gsub("__(.+?)__", "<b>\\1</b>", html)
 
-      for (i in seq_along(lines)) {
-        line <- lines[i]
+    # Inline code: `text`
+    html <- gsub("`([^`]+)`", "<code>\\1</code>", html)
 
-        # Protect code block placeholders
-        if (grepl("__CODE__", line)) {
-          processed[i] <- line
-        }
-        # Headers
-        else if (grepl("^### ", line)) {
-          processed[i] <- sub("^### (.+)$", "<h3>\\1</h3>", line)
-        } else if (grepl("^## ", line)) {
-          processed[i] <- sub("^## (.+)$", "<h2>\\1</h2>", line)
-        } else if (grepl("^# ", line)) {
-          processed[i] <- sub("^# (.+)$", "<h1>\\1</h1>", line)
-        }
-        # Lists
-        else if (grepl("^[0-9]+\\. ", line)) {
-          processed[i] <- sub("^[0-9]+\\. (.+)$", "<li>\\1</li>", line)
-        } else if (grepl("^- ", line)) {
-          processed[i] <- sub("^- (.+)$", "<li>\\1</li>", line)
-        }
-        # Horizontal rule
-        else if (grepl("^---+$", line)) {
-          processed[i] <- "<hr>"
-        }
-        else {
-          processed[i] <- line
-        }
-      }
+    # Headers
+    html <- gsub("^### (.+)$", "<h3>\\1</h3>", html, perl = TRUE)
+    html <- gsub("^## (.+)$", "<h2>\\1</h2>", html, perl = TRUE)
+    html <- gsub("^# (.+)$", "<h1>\\1</h1>", html, perl = TRUE)
 
-      # Step 4: Join with line breaks
-      html <- paste(processed, collapse = "<br>")
+    # Lists
+    html <- gsub("^- (.+)$", "<li>\\1</li>", html, perl = TRUE)
+    html <- gsub("^\\* (.+)$", "<li>\\1</li>", html, perl = TRUE)
+    html <- gsub("^[0-9]+\\. (.+)$", "<li>\\1</li>", html, perl = TRUE)
 
-      # Step 5: Restore code blocks (with HTML escaping)
-      for (i in seq_along(code_blocks)) {
-        code_content <- code_blocks[[i]]
-        code_content <- gsub("&", "&amp;", code_content, fixed = TRUE)
-        code_content <- gsub("<", "&lt;", code_content, fixed = TRUE)
-        code_content <- gsub(">", "&gt;", code_content, fixed = TRUE)
-        code_html <- paste0("<pre><code class='language-r'>", code_content, "</code></pre>")
-        html <- gsub(paste0("__CODE__", i, "__"), code_html, html, fixed = TRUE)
-      }
+    # Line breaks
+    html <- gsub("\n", "<br>", html)
 
-      # Step 6: Wrap lists
-      html <- gsub("(<li>.*?</li>)(<br>)+(<li>)", "\\1\\3", html)
-      html <- gsub("(<li>.*?</li>)", "<ul>\\1</ul>", html)
-      html <- gsub("</ul><br><ul>", "", html, fixed = TRUE)
+    # Restore code blocks
+    for (i in seq_along(code_blocks)) {
+      code_content <- code_blocks[[i]]
+      # Escape HTML in code
+      code_content <- gsub("&", "&amp;", code_content, fixed = TRUE)
+      code_content <- gsub("<", "&lt;", code_content, fixed = TRUE)
+      code_content <- gsub(">", "&gt;", code_content, fixed = TRUE)
+      code_html <- paste0("<pre><code class='language-r'>", code_content, "</code></pre>")
+      html <- gsub(paste0("__CODEBLOCK", i, "__"), code_html, html, fixed = TRUE)
+    }
 
-      # Step 7: Clean up code blocks
-      html <- gsub("<pre><code class='language-r'><br>", "<pre><code class='language-r'>", html, fixed = TRUE)
-      html <- gsub("<br></code></pre>", "</code></pre>", html, fixed = TRUE)
+    # Wrap consecutive list items
+    html <- gsub("(<li>.+?</li>)<br>(<li>)", "\\1\\2", html)
+    html <- gsub("(<li>.+?</li>)+", "<ul>\\0</ul>", html)
 
-      return(html)
-    }, error = function(e) {
-      return(gsub("\n", "<br>", text, fixed = TRUE))
-    })
+    return(html)
   }
   
   # Store messages for current chat
