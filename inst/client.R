@@ -2151,14 +2151,28 @@ server <- function(input, output, session) {
     # Simple and direct - just replace markdown with HTML
     html <- text
 
-    # Extract code blocks first
+    # Extract code blocks first using gregexpr and regmatches
     code_blocks <- list()
-    code_counter <- 0
-    html <- gsub("```[rR]?\\n?([^`]+)```", function(match) {
-      code_counter <<- code_counter + 1
-      code_blocks[[code_counter]] <<- match[1]
-      return(paste0("__CODEBLOCK", code_counter, "__"))
-    }, html, perl = TRUE)
+    code_pattern <- "```[rR]?\\n?([^`]+)```"
+    matches <- gregexpr(code_pattern, html, perl = TRUE)
+
+    if (matches[[1]][1] != -1) {
+      # Extract matched code blocks
+      matched_texts <- regmatches(html, matches)[[1]]
+
+      # Store code blocks and create placeholders
+      for (i in seq_along(matched_texts)) {
+        # Extract content between backticks
+        code_content <- sub("```[rR]?\\n?", "", matched_texts[i])
+        code_content <- sub("```$", "", code_content)
+        code_blocks[[i]] <- code_content
+      }
+
+      # Replace with placeholders
+      for (i in seq_along(matched_texts)) {
+        html <- sub(code_pattern, paste0("__CODEBLOCK", i, "__"), html, perl = TRUE)
+      }
+    }
 
     # Convert markdown to HTML - do this BEFORE escaping
     # Bold: **text** or __text__
