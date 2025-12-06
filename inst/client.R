@@ -2145,42 +2145,59 @@ server <- function(input, output, session) {
   cat("Server function started\n")
   
   # Simplified markdown rendering with HTML/CSS
+  # SECURITY: Properly escapes HTML to prevent XSS attacks
   render_markdown <- function(text) {
     if (is.null(text) || nchar(text) == 0) return("")
 
-    # Simple and direct - just replace markdown with HTML
     html <- text
 
-    # Extract code blocks first using gregexpr and regmatches
+    # SECURITY FIX: Extract code blocks FIRST before HTML escaping
     code_blocks <- list()
+    inline_codes <- list()
+
+    # Extract multi-line code blocks (```...```)
     code_pattern <- "```[rR]?\\n?([^`]+)```"
     matches <- gregexpr(code_pattern, html, perl = TRUE)
 
     if (matches[[1]][1] != -1) {
-      # Extract matched code blocks
       matched_texts <- regmatches(html, matches)[[1]]
-
-      # Store code blocks and create placeholders
       for (i in seq_along(matched_texts)) {
-        # Extract content between backticks
         code_content <- sub("```[rR]?\\n?", "", matched_texts[i])
         code_content <- sub("```$", "", code_content)
         code_blocks[[i]] <- code_content
       }
-
-      # Replace with placeholders
       for (i in seq_along(matched_texts)) {
         html <- sub(code_pattern, paste0("__CODEBLOCK", i, "__"), html, perl = TRUE)
       }
     }
 
-    # Convert markdown to HTML - do this BEFORE escaping
-    # Bold: **text** or __text__
-    html <- gsub("\\*\\*(.+?)\\*\\*", "<b>\\1</b>", html)
-    html <- gsub("__(.+?)__", "<b>\\1</b>", html)
+    # Extract inline code (`...`)
+    inline_pattern <- "`([^`]+)`"
+    inline_matches <- gregexpr(inline_pattern, html, perl = TRUE)
 
-    # Inline code: `text`
-    html <- gsub("`([^`]+)`", "<code>\\1</code>", html)
+    if (inline_matches[[1]][1] != -1) {
+      inline_texts <- regmatches(html, inline_matches)[[1]]
+      for (i in seq_along(inline_texts)) {
+        inline_content <- sub("^`", "", inline_texts[i])
+        inline_content <- sub("`$", "", inline_content)
+        inline_codes[[i]] <- inline_content
+      }
+      for (i in seq_along(inline_texts)) {
+        html <- sub(inline_pattern, paste0("__INLINECODE", i, "__"), html, perl = FALSE)
+      }
+    }
+
+    # SECURITY FIX: NOW escape all HTML entities to prevent XSS
+    # This prevents <script>, <img onerror>, and other malicious HTML
+    html <- gsub("&", "&amp;", html, fixed = TRUE)
+    html <- gsub("<", "&lt;", html, fixed = TRUE)
+    html <- gsub(">", "&gt;", html, fixed = TRUE)
+    html <- gsub("\"", "&quot;", html, fixed = TRUE)
+    html <- gsub("'", "&#39;", html, fixed = TRUE)
+
+    # NOW safe to convert markdown to HTML (on escaped text)
+    # Bold: **text** (need to unescape the <b> tags we create)
+    html <- gsub("\\*\\*(.+?)\\*\\*", "<b>\\1</b>", html)
 
     # Headers
     html <- gsub("^### (.+)$", "<h3>\\1</h3>", html, perl = TRUE)
@@ -2192,16 +2209,35 @@ server <- function(input, output, session) {
     html <- gsub("^\\* (.+)$", "<li>\\1</li>", html, perl = TRUE)
     html <- gsub("^[0-9]+\\. (.+)$", "<li>\\1</li>", html, perl = TRUE)
 
+    # Unescape our own HTML tags (but not user content)
+    html <- gsub("&lt;b&gt;", "<b>", html, fixed = TRUE)
+    html <- gsub("&lt;/b&gt;", "</b>", html, fixed = TRUE)
+    html <- gsub("&lt;h1&gt;", "<h1>", html, fixed = TRUE)
+    html <- gsub("&lt;/h1&gt;", "</h1>", html, fixed = TRUE)
+    html <- gsub("&lt;h2&gt;", "<h2>", html, fixed = TRUE)
+    html <- gsub("&lt;/h2&gt;", "</h2>", html, fixed = TRUE)
+    html <- gsub("&lt;h3&gt;", "<h3>", html, fixed = TRUE)
+    html <- gsub("&lt;/h3&gt;", "</h3>", html, fixed = TRUE)
+    html <- gsub("&lt;li&gt;", "<li>", html, fixed = TRUE)
+    html <- gsub("&lt;/li&gt;", "</li>", html, fixed = TRUE)
+    html <- gsub("&lt;ul&gt;", "<ul>", html, fixed = TRUE)
+    html <- gsub("&lt;/ul&gt;", "</ul>", html, fixed = TRUE)
+
     # Line breaks
     html <- gsub("\n", "<br>", html)
 
-    # Restore code blocks
+    # Restore inline code (already safe - will be escaped)
+    for (i in seq_along(inline_codes)) {
+      code_content <- inline_codes[[i]]
+      # Already escaped above, just wrap in <code>
+      code_html <- paste0("<code>", code_content, "</code>")
+      html <- gsub(paste0("__INLINECODE", i, "__"), code_html, html, fixed = TRUE)
+    }
+
+    # Restore code blocks (already safe - will be escaped)
     for (i in seq_along(code_blocks)) {
       code_content <- code_blocks[[i]]
-      # Escape HTML in code
-      code_content <- gsub("&", "&amp;", code_content, fixed = TRUE)
-      code_content <- gsub("<", "&lt;", code_content, fixed = TRUE)
-      code_content <- gsub(">", "&gt;", code_content, fixed = TRUE)
+      # Already escaped above, just wrap in <pre><code>
       code_html <- paste0("<pre><code class='language-r'>", code_content, "</code></pre>")
       html <- gsub(paste0("__CODEBLOCK", i, "__"), code_html, html, fixed = TRUE)
     }

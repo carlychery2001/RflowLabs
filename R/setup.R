@@ -23,8 +23,8 @@ setup_claude_client <- function() {
     )
   }
   
-  # Create client
-  client <- ellmer::chat_anthropic(model = "claude-sonnet-4-20250514")
+  # Create client with Claude Sonnet 4.5 (matches model in agents/main.md)
+  client <- ellmer::chat_anthropic(model = "claude-sonnet-4-5")
   options(rflow.client = client)
   return(client)
 }

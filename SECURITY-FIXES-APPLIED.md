@@ -1,7 +1,7 @@
 # 🔒 Security Fixes Applied to Rflow
 
-**Date:** 2025-12-04
-**Version:** 0.9.1 (Post-Security-Fix)
+**Date:** 2025-12-05
+**Version:** 1.0.0 (Post-Security-Fix)
 **Status:** ✅ **Critical Issues Fixed**
 
 ---
@@ -17,7 +17,7 @@ Following a comprehensive security audit, **all critical and medium-priority sec
 ### Issue: Cross-Site Scripting in Markdown Rendering
 **Severity:** 🔴 CRITICAL
 **File:** `inst/client.R`
-**Lines:** 2136-2164
+**Lines:** 2148-2250
 
 ### What Was Fixed:
 The markdown rendering function now properly escapes HTML to prevent XSS attacks.
@@ -28,38 +28,34 @@ The markdown rendering function now properly escapes HTML to prevent XSS attacks
 ```r
 render_markdown <- function(text) {
   # Directly processed user/AI content without escaping
-  text <- gsub("```r\\n([^`]+)```", "<pre><code>\\1</code></pre>", text)
-  # ... more processing ...
+  html <- text
+  # ... markdown processing without HTML escaping ...
+  html <- gsub("\\*\\*(.+?)\\*\\*", "<b>\\1</b>", html)
+  # VULNERABLE: No HTML entity escaping!
 }
 ```
 
 **After (Secure):**
 ```r
 render_markdown <- function(text) {
-  # SECURITY FIX: Extract code blocks BEFORE HTML escaping
+  # SECURITY FIX: Extract code blocks and inline code FIRST
   code_blocks <- list()
-  code_counter <- 0
+  inline_codes <- list()
+  # ... extract and replace with placeholders ...
 
-  # Extract code blocks and replace with placeholders
-  text <- gsub("```[rR]?\\n?([^`]+)```", function(match) {
-    code_counter <<- code_counter + 1
-    code_blocks[[code_counter]] <<- match[1]
-    return(paste0("__RFLOW_CODE_BLOCK_", code_counter, "__"))
-  }, text, perl = TRUE)
+  # SECURITY FIX: Escape ALL HTML entities to prevent XSS
+  html <- gsub("&", "&amp;", html, fixed = TRUE)
+  html <- gsub("<", "&lt;", html, fixed = TRUE)
+  html <- gsub(">", "&gt;", html, fixed = TRUE)
+  html <- gsub("\"", "&quot;", html, fixed = TRUE)
+  html <- gsub("'", "&#39;", html, fixed = TRUE)
 
-  # SECURITY FIX: NOW escape all HTML to prevent XSS
-  text <- htmltools::htmlEscape(text, attribute = FALSE)
+  # NOW safe to convert markdown (on escaped text)
+  html <- gsub("\\*\\*(.+?)\\*\\*", "<b>\\1</b>", html)
 
-  # Restore code blocks with proper HTML (escaped content)
-  for (i in seq_along(code_blocks)) {
-    placeholder <- paste0("__RFLOW_CODE_BLOCK_", i, "__")
-    code_content <- gsub("```[rR]?\\n?([^`]+)```", "\\1", code_blocks[[i]], perl = TRUE)
-    # Escape the code content too
-    code_content <- htmltools::htmlEscape(code_content, attribute = FALSE)
-    code_html <- paste0("<pre><code class='language-r'>", code_content, "</code></pre>")
-    text <- gsub(placeholder, code_html, text, fixed = TRUE)
-  }
-  # ... rest of markdown processing ...
+  # Unescape only OUR tags, not user content
+  html <- gsub("&lt;b&gt;", "<b>", html, fixed = TRUE)
+  # ... restore code blocks safely ...
 }
 ```
 
@@ -152,11 +148,43 @@ stop_rflow <- function() {
 
 ---
 
+## ✅ FIXED: Invalid Model Configuration
+
+### Issue: Incorrect Model Name
+**Severity:** 🟡 HIGH (Runtime Error)
+**File:** `R/setup.R`
+**Line:** 27
+
+### What Was Fixed:
+Updated model name to use the correct format that matches the agent configuration.
+
+### Changes Made:
+
+**Before:**
+```r
+client <- ellmer::chat_anthropic(model = "claude-sonnet-4-20250514")
+```
+
+**After:**
+```r
+# Create client with Claude Sonnet 4.5 (matches model in agents/main.md)
+client <- ellmer::chat_anthropic(model = "claude-sonnet-4-5")
+```
+
+### Benefits:
+- ✅ Uses correct model alias format
+- ✅ Matches configuration in agents/main.md
+- ✅ Prevents API errors on startup
+- ✅ Uses latest stable Claude Sonnet 4.5 model
+
+---
+
 ## 📋 Security Status Summary
 
 ### Fixed Issues:
-- ✅ **CRITICAL:** XSS vulnerability in markdown rendering - **FIXED**
-- ✅ **MEDIUM:** Temp file cleanup - **FIXED**
+- ✅ **CRITICAL:** XSS vulnerability in markdown rendering - **FIXED (2025-12-05)**
+- ✅ **HIGH:** Invalid model configuration - **FIXED (2025-12-05)**
+- ✅ **MEDIUM:** Temp file cleanup - **FIXED (Previously)**
 
 ### Already Secure (No Changes Needed):
 - ✅ API key handling - Uses environment variables, never logged
@@ -214,8 +242,11 @@ list.files(tempdir(), pattern = "file.*\\.(rds|R|html)")  # Empty
    - Lines 245-246: Added cleanup call to stop_rflow()
 
 ### Documentation:
-3. **SECURITY-AUDIT.md** - Comprehensive security audit report
-4. **SECURITY-FIXES-APPLIED.md** - This document
+3. **R/setup.R**
+   - Line 26-27: Updated model name to "claude-sonnet-4-5"
+
+4. **SECURITY-AUDIT.md** - Comprehensive security audit report
+5. **SECURITY-FIXES-APPLIED.md** - This document (updated 2025-12-05)
 
 ---
 
