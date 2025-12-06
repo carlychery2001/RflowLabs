@@ -41,12 +41,12 @@ start_proxy_server <- function() {
   tryCatch({
     port <- .rflow_env$proxy_port
     
-    # Start Python process
+    # Start Python process (SECURITY: Bind to localhost only)
     if (.Platform$OS.type == "windows") {
-      cmd <- sprintf('python "%s" %d', proxy_script, port)
+      cmd <- sprintf('python "%s" %d --host 127.0.0.1', proxy_script, port)
       .rflow_env$proxy_process <- system(cmd, wait = FALSE, invisible = TRUE)
     } else {
-      cmd <- sprintf('python3 "%s" %d &', proxy_script, port)
+      cmd <- sprintf('python3 "%s" %d --host 127.0.0.1 &', proxy_script, port)
       system(cmd)
     }
     
@@ -124,7 +124,15 @@ wrap_content_with_controls <- function(original_url) {
   # Normalize path for iframe
   original_path <- normalizePath(original_url, winslash = "/")
   iframe_src <- paste0("file:///", original_path)
-  
+
+  # Get paths to bundled JavaScript libraries (SECURITY: Use local files instead of CDN)
+  html2canvas_path <- system.file("www/js/html2canvas.min.js", package = "Rflow")
+  jspdf_path <- system.file("www/js/jspdf.umd.min.js", package = "Rflow")
+
+  # Normalize paths for browser
+  html2canvas_url <- paste0("file:///", normalizePath(html2canvas_path, winslash = "/"))
+  jspdf_url <- paste0("file:///", normalizePath(jspdf_path, winslash = "/"))
+
   # Create wrapped HTML with controls using iframe
   wrapped_html <- sprintf('
 <!DOCTYPE html>
@@ -227,10 +235,10 @@ wrap_content_with_controls <- function(original_url) {
   </div>
   
   <iframe id="contentFrame" class="content-frame" src="%s"></iframe>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  
+
+  <script src="%s"></script>
+  <script src="%s"></script>
+
   <script>
     function clearView() {
       if (confirm("Clear this view? This will close the window.")) {
@@ -309,7 +317,7 @@ wrap_content_with_controls <- function(original_url) {
   </script>
 </body>
 </html>
-  ', iframe_src)
+  ', iframe_src, html2canvas_url, jspdf_url)
   
   # Save wrapped HTML to temp file
   temp_file <- tempfile(fileext = ".html")
